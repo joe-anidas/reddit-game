@@ -1,5 +1,8 @@
 import { useEffect, useState, useRef } from 'react';
 import './styles.css';
+import image1 from './images/1.png';
+import image2 from './images/2.png';
+import runImage from './images/run.png';
 
 type GameState = 'menu' | 'playing' | 'gameOver' | 'leaderboard';
 type DollState = 'green' | 'red';
@@ -22,7 +25,16 @@ export default function App() {
   const dollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  const tapsToComplete = level === 1 ? 200 : level === 2 ? 300 : 300 + (level - 2) * 50;
+  const getTapsToComplete = (level: number) => {
+    if (level <= 4) return level * 5;
+    return 20 + (level - 4) * 10;
+  };
+  const tapsToComplete = getTapsToComplete(level);
+
+  const getLevelTimer = (level: number) => {
+    if (level <= 4) return 10 + (level - 1) * 5;
+    return 30 + (level - 4) * 10;
+  };
 
   // Audio system - using Web Audio API to generate sounds
   const playSound = (frequency: number, duration: number, type: 'sine' | 'square' = 'sine') => {
@@ -137,8 +149,9 @@ export default function App() {
         }
       }, 1500);
     } else {
-      const moveAmount = 100 / tapsToComplete;
-      setPlayerPosition((prev) => prev + moveAmount);
+      const moveAmount = 85 / tapsToComplete; // Move towards finish line at 85% of track
+      const newPosition = playerPosition + moveAmount;
+      setPlayerPosition(newPosition);
       setDistance((prev) => prev + 1);
       
       // Calculate score with level multiplier
@@ -146,11 +159,12 @@ export default function App() {
       setScore((prev) => prev + Math.floor(levelMultiplier));
       setTaps((prev) => prev + 1);
       
-      if (taps + 1 >= tapsToComplete) {
+      // Check if player reached the finish line (85% of track)
+      if (newPosition >= 85) {
         // Level completed - advance to next level
         setLevel((prev) => prev + 1);
         setTaps(0);
-        setTimer(30 + level * 5); // Slightly more time for higher levels
+        setTimer(getLevelTimer(level + 1)); // Use new timer logic
         setPlayerPosition(0);
         setDollSpeed(prev => Math.max(prev - 200, 500)); // Faster doll rotation
         setGreenLightDuration(prev => Math.max(prev - 100, 300)); // Shorter green light
@@ -161,7 +175,7 @@ export default function App() {
   const startGame = () => {
     setGameState('playing');
     setPlayerPosition(0);
-    setTimer(30);
+    setTimer(getLevelTimer(1)); // Use new timer logic
     setScore(0);
     setLevel(1);
     setTaps(0);
@@ -179,11 +193,6 @@ export default function App() {
     setGameState('leaderboard');
   };
 
-  const loginWithReddit = () => {
-    // Placeholder for Reddit authentication
-    setIsAuthenticated(true);
-    alert('Reddit login functionality would be implemented here');
-  };
 
   const shareScore = () => {
     // Placeholder for score sharing functionality
@@ -208,9 +217,7 @@ export default function App() {
           <div className="menu-buttons">
             <button className="play-btn" onClick={startGame}>Play</button>
             <button className="leaderboard-btn" onClick={showLeaderboard}>Leaderboard</button>
-            {!isAuthenticated && (
-              <button className="login-btn" onClick={loginWithReddit}>Login with Reddit</button>
-            )}
+           
           </div>
           {highScore > 0 && (
             <div className="high-score-display">
@@ -222,6 +229,7 @@ export default function App() {
 
       {gameState === 'leaderboard' && (
         <div className="leaderboard">
+          <div className="squid-symbols">▲ ● ■</div>
           <h2>Leaderboard</h2>
           <div className="leaderboard-list">
             <p>Feature coming soon!</p>
@@ -235,7 +243,7 @@ export default function App() {
         <div className="game-screen">
           <div className="game-header">
             <div className="timer-bar">
-              <div className="timer-fill" style={{ width: `${(timer / 30) * 100}%` }}></div>
+              <div className="timer-fill" style={{ width: `${(timer / getLevelTimer(level)) * 100}%` }}></div>
               <span className="timer-text">Time: {timer}s</span>
             </div>
             <div className="game-stats">
@@ -247,13 +255,28 @@ export default function App() {
           
           <div className="game-field">
             <div className={`doll ${dollState}`}>
-              <div className="doll-head">🎭</div>
+              <div className="doll-head">
+                <img 
+                  src={dollState === 'green' ? image1 : image2} 
+                  alt={`Young-hee Doll - ${dollState === 'green' ? 'Green Light' : 'Red Light'}`} 
+                  className="doll-image" 
+                />
+              </div>
               <div className="doll-status">{dollState === 'green' ? 'Green Light' : 'Red Light'}</div>
             </div>
             
             <div className="track">
-              <div className="checkpoint" style={{ bottom: '10%' }}>🏁</div>
-              <div className="player" style={{ bottom: `${10 + playerPosition}%` }}>🚶‍♀️</div>
+              <div className="checkpoint finish-line" style={{ top: '5%' }}>
+                <span className="checkpoint-text">FINISH</span>
+              </div>
+              <div className="checkpoint start-line" style={{ bottom: '10%' }}>
+                <span className="checkpoint-text">START</span>
+              </div>
+              <div className="player" style={{ bottom: `${10 + playerPosition}%` }}>
+                <div className="player-body">
+                  <img src={runImage} alt="Player Running" className="player-image" />
+                </div>
+              </div>
             </div>
             
             {showCaughtAnimation && (
@@ -270,16 +293,16 @@ export default function App() {
               onClick={handleTap}
               disabled={showCaughtAnimation}
             >
-              {dollState === 'green' ? '✅ TAP TO MOVE' : '🛑 STOP!'}
+              {dollState === 'green' ? '▶ TAP TO MOVE' : '■ STOP!'}
             </button>
             <div className="progress-indicator">
               <div className="progress-bar">
                 <div 
                   className="progress-fill" 
-                  style={{ width: `${(taps / tapsToComplete) * 100}%` }}
+                  style={{ width: `${(playerPosition / 85) * 100}%` }}
                 ></div>
               </div>
-              <span className="progress-text">{taps}/{tapsToComplete} moves to next level</span>
+              <span className="progress-text">Distance to finish: {Math.round((playerPosition / 85) * 100)}%</span>
             </div>
           </div>
         </div>
@@ -287,20 +310,21 @@ export default function App() {
 
       {gameState === 'gameOver' && (
         <div className="game-over">
-          <h1>GAME OVER</h1>
+          <div className="elimination-symbol">✗</div>
+          <h1>ELIMINATED</h1>
           <div className="final-stats">
             <p className="final-score">Score: {score}</p>
             <p className="final-level">Level Reached: {level}</p>
             <p className="final-distance">Distance: {distance}m</p>
             {score === highScore && score > 0 && (
-              <p className="new-high-score">🎉 NEW HIGH SCORE! 🎉</p>
+              <p className="new-high-score">★ NEW HIGH SCORE! ★</p>
             )}
             {highScore > 0 && (
               <p className="high-score">High Score: {highScore}</p>
             )}
           </div>
           <div className="game-over-buttons">
-            <button className="play-again-btn" onClick={startGame}>Play Again</button>
+            <button className="play-again-btn" onClick={startGame}>Try Again</button>
             <button className="share-btn" onClick={shareScore}>Share Your Score</button>
             <button className="menu-btn" onClick={goToMenu}>Main Menu</button>
           </div>
