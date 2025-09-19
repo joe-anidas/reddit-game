@@ -324,21 +324,6 @@ html::before {
   position: relative;
 }
 
-.high-score-display::before {
-  content: '★';
-  position: absolute;
-  top: -8px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 1.2rem;
-  background: var(--squid-teal);
-  padding: 0.2rem 0.5rem;
-  border-radius: 50%;
-  border: 2px solid var(--squid-cyan);
-  color: var(--squid-white);
-  text-shadow: 0 0 5px var(--squid-cyan);
-}
-
 @keyframes squid-score-glow {
   0% { 
     border-color: var(--squid-teal);
@@ -460,7 +445,7 @@ html::before {
   background: 
     linear-gradient(90deg, var(--danger) 0%, var(--warning) 50%, var(--success) 100%),
     linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
-  transition: width 0.3s ease;
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: 23px;
   position: relative;
   box-shadow: 
@@ -646,12 +631,12 @@ html::before {
 }
 
 .doll-status {
-  font-size: 0.9rem;
-  font-weight: 800;
+  font-size: 0.7rem;
+  font-weight: 700;
   padding: 0.6rem 1.2rem;
   border-radius: 25px;
   text-transform: uppercase;
-  letter-spacing: 2px;
+  letter-spacing: 1px;
   position: relative;
   backdrop-filter: blur(10px);
   transition: all 0.3s ease;
@@ -754,7 +739,7 @@ html::before {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: bottom 0.3s ease, filter 0.3s ease;
   z-index: 4;
   display: flex;
   flex-direction: column;
@@ -951,7 +936,7 @@ html::before {
 .progress-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--reddit-orange), var(--accent));
-  transition: width 0.3s ease;
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: 9px;
 }
 

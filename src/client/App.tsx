@@ -194,18 +194,35 @@ export default function App() {
   };
 
 
-  const shareScore = () => {
-    // Placeholder for score sharing functionality
-    if (navigator.share) {
-      navigator.share({
-        title: 'Red Light, Green Light',
-        text: `I scored ${score} points in Red Light, Green Light!`,
-        url: window.location.href,
-      });
-    } else {
-      // Fallback for browsers that don't support Web Share API
-      navigator.clipboard.writeText(`I scored ${score} points in Red Light, Green Light! ${window.location.href}`);
-      alert('Score copied to clipboard!');
+  const shareScore = async () => {
+    const shareText = `I scored ${score} points in Red Light, Green Light! Can you beat my score?`;
+    
+    try {
+      // Try Web Share API first (but handle permission errors gracefully)
+      if (navigator.share && navigator.canShare && navigator.canShare({ text: shareText })) {
+        await navigator.share({
+          title: 'Red Light, Green Light - Score',
+          text: shareText,
+          url: window.location.href,
+        });
+      } else {
+        throw new Error('Web Share not available');
+      }
+    } catch (error) {
+      // Fallback to clipboard
+      try {
+        await navigator.clipboard.writeText(shareText + ` ${window.location.href}`);
+        alert('Score copied to clipboard! 📋');
+      } catch (clipboardError) {
+        // Final fallback if clipboard also fails
+        const textArea = document.createElement('textarea');
+        textArea.value = shareText + ` ${window.location.href}`;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        alert('Score copied to clipboard! 📋');
+      }
     }
   };
 
@@ -273,9 +290,7 @@ export default function App() {
                 <span className="checkpoint-text">START</span>
               </div>
               <div className="player" style={{ bottom: `${10 + playerPosition}%` }}>
-                <div className="player-body">
-                  <img src={runImage} alt="Player Running" className="player-image" />
-                </div>
+                <img src={runImage} alt="Player Running" className="player-image" />
               </div>
             </div>
             
